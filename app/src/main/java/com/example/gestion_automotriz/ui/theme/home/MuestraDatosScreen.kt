@@ -15,10 +15,12 @@ fun MuestraDatosScreen(
     user: String,
     products: List<ProductEntity>,
     onOpenDrawer: () -> Unit,
-    onEditProduct: (ProductEntity) -> Unit
+    onEditProduct: (ProductEntity) -> Unit,
+    onDeleteProduct: (ProductEntity) -> Unit
 ) {
     var search by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("Todas") }
+    var deletingProduct by remember { mutableStateOf<ProductEntity?>(null) }
 
     val categories = remember(products) {
         listOf("Todas") + products.map { it.category }.distinct()
@@ -82,8 +84,13 @@ fun MuestraDatosScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(text = product.name, style = MaterialTheme.typography.titleMedium)
-                                TextButton(onClick = { onEditProduct(product) }) {
-                                    Text("Editar / Mover")
+                                Row {
+                                    TextButton(onClick = { onEditProduct(product) }) {
+                                        Text("Editar")
+                                    }
+                                    TextButton(onClick = { deletingProduct = product }) {
+                                        Text("Eliminar")
+                                    }
                                 }
                             }
                             Text(text = "Código: ${product.code} | Categoría: ${product.category} | Marca: ${product.brand}")
@@ -94,6 +101,29 @@ fun MuestraDatosScreen(
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
+                    }
+
+                    deletingProduct?.let { product ->
+                        AlertDialog(
+                            onDismissRequest = { deletingProduct = null },
+                            title = { Text("Eliminar producto") },
+                            text = { Text("¿Deseas eliminar ${product.name} (${product.code})?") },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        onDeleteProduct(product)
+                                        deletingProduct = null
+                                    }
+                                ) {
+                                    Text("Eliminar")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { deletingProduct = null }) {
+                                    Text("Cancelar")
+                                }
+                            }
+                        )
                     }
                 }
             }

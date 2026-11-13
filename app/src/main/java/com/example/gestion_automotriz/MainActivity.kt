@@ -4,11 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.ViewModelProvider
 import com.example.gestion_automotriz.model.AppDatabase
+import com.example.gestion_automotriz.data.remote.RetrofitInstance
 import com.example.gestion_automotriz.navigation.AppNav
 import com.example.gestion_automotriz.repository.InventoryRepository
+import com.example.gestion_automotriz.repository.PostRepository
 import com.example.gestion_automotriz.ui.theme.AppTheme
 import com.example.gestion_automotriz.ui.theme.login.LoginViewModel
+import com.example.gestion_automotriz.viewmodel.PostViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,13 +29,18 @@ class MainActivity : ComponentActivity() {
 
         // 3. Instancia del ViewModel para la gestión del inicio de sesión
         val loginViewModel = LoginViewModel()
+        val postViewModel = ViewModelProvider(
+            this,
+            PostViewModel.Factory(PostRepository(RetrofitInstance.api))
+        )[PostViewModel::class.java]
 
         // 4. Montaje de la interfaz gráfica con Compose
         setContent {
             AppTheme {
                 AppNav(
                     loginViewModel = loginViewModel,
-                    inventoryRepository = inventoryRepository
+                    inventoryRepository = inventoryRepository,
+                    postViewModel = postViewModel
                 )
             }
         }

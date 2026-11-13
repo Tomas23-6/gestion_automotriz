@@ -10,13 +10,15 @@ import com.example.gestion_automotriz.model.ProductEntity
 import com.example.gestion_automotriz.repository.InventoryRepository
 import com.example.gestion_automotriz.ui.theme.home.MuestraDatosScreen
 import com.example.gestion_automotriz.ui.theme.login.LoginViewModel
+import com.example.gestion_automotriz.viewmodel.PostViewModel
 import com.example.gestion_automotriz.view.*
 import kotlinx.coroutines.launch
 
 @Composable
 fun AppNav(
     loginViewModel: LoginViewModel,
-    inventoryRepository: InventoryRepository
+    inventoryRepository: InventoryRepository,
+    postViewModel: PostViewModel
 ) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
@@ -43,6 +45,9 @@ fun AppNav(
                     onEditProduct = { product ->
                         editingProduct = product
                         navController.navigate("productoForm/$user")
+                    },
+                    onDeleteProduct = { product ->
+                        scope.launch { inventoryRepository.deleteProduct(product.code) }
                     }
                 )
             }
@@ -120,7 +125,29 @@ fun AppNav(
             DrawerMenu(user = user, navController = navController) {
                 ProveedorScreen(
                     providers = providers,
-                    onSaveProvider = { prov -> scope.launch { inventoryRepository.saveProvider(prov) } }
+                    onSaveProvider = { prov -> scope.launch { inventoryRepository.saveProvider(prov) } },
+                    onDeleteProvider = { provider ->
+                        scope.launch { inventoryRepository.deleteProvider(provider.providerId) }
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = "publicaciones/{user}",
+            arguments = listOf(navArgument("user") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val user = backStackEntry.arguments?.getString("user") ?: "Propietario"
+            val state by postViewModel.uiState
+
+            DrawerMenu(user = user, navController = navController) { openDrawer ->
+                PostScreen(
+                    state = state,
+                    onOpenDrawer = openDrawer,
+                    onReload = postViewModel::loadPosts,
+                    onCreate = postViewModel::createPost,
+                    onUpdate = postViewModel::updatePost,
+                    onDelete = postViewModel::deletePost
                 )
             }
         }

@@ -19,6 +19,9 @@ interface ProductDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateProduct(product: ProductEntity)
 
+    @Query("DELETE FROM products WHERE code = :code")
+    suspend fun deleteProduct(code: String)
+
     @Query("UPDATE products SET currentStock = :newStock, lastUpdate = :timestamp WHERE code = :code")
     suspend fun updateStock(code: String, newStock: Int, timestamp: Long)
 }
@@ -45,6 +48,9 @@ interface ProviderDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProvider(provider: ProviderEntity)
+
+    @Query("DELETE FROM providers WHERE providerId = :id")
+    suspend fun deleteProvider(id: String)
 }
 
 @Database(

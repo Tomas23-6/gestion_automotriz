@@ -28,8 +28,16 @@ class InventoryRepository(private val db: AppDatabase) {
         db.productDao().insertOrUpdateProduct(product)
     }
 
+    suspend fun deleteProduct(code: String) {
+        db.productDao().deleteProduct(code)
+    }
+
     suspend fun saveProvider(provider: ProviderEntity) {
         db.providerDao().insertProvider(provider)
+    }
+
+    suspend fun deleteProvider(id: String) {
+        db.providerDao().deleteProvider(id)
     }
 
     suspend fun getProviderById(id: String): ProviderEntity? {
