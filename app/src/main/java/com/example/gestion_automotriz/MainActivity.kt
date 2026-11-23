@@ -12,6 +12,7 @@ import com.example.gestion_automotriz.repository.InventoryRepository
 import com.example.gestion_automotriz.repository.PostRepository
 import com.example.gestion_automotriz.ui.theme.AppTheme
 import com.example.gestion_automotriz.ui.theme.login.LoginViewModel
+import com.example.gestion_automotriz.viewmodel.InventoryViewModel
 import com.example.gestion_automotriz.viewmodel.PostViewModel
 
 class MainActivity : ComponentActivity() {
@@ -34,12 +35,17 @@ class MainActivity : ComponentActivity() {
             PostViewModel.Factory(PostRepository(RetrofitInstance.api))
         )[PostViewModel::class.java]
 
+        val inventoryViewModel = ViewModelProvider(
+            this,
+            InventoryViewModel.Factory(inventoryRepository)
+        )[InventoryViewModel::class.java]
+
         // 4. Montaje de la interfaz gráfica con Compose
         setContent {
             AppTheme {
                 AppNav(
                     loginViewModel = loginViewModel,
-                    inventoryRepository = inventoryRepository,
+                    inventoryViewModel = inventoryViewModel,
                     postViewModel = postViewModel
                 )
             }

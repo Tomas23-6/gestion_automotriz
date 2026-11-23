@@ -1,5 +1,7 @@
 package com.example.gestion_automotriz.repository
 
+import com.example.gestion_automotriz.data.remote.BackendApiService
+import com.example.gestion_automotriz.data.remote.BackendRetrofitInstance
 import com.example.gestion_automotriz.model.*
 import kotlinx.coroutines.flow.Flow
 
@@ -17,26 +19,40 @@ class AuthRepository {
     }
 }
 
-class InventoryRepository(private val db: AppDatabase) {
-
+class InventoryRepository(
+    private val db: AppDatabase,
+    private val backendApi: BackendApiService = BackendRetrofitInstance.api
+) {
     fun getAllProducts(): Flow<List<ProductEntity>> = db.productDao().getAllProducts()
     fun getLowStockProducts(): Flow<List<ProductEntity>> = db.productDao().getLowStockProducts()
     fun getAllMovements(): Flow<List<MovementEntity>> = db.movementDao().getAllMovements()
     fun getAllProviders(): Flow<List<ProviderEntity>> = db.providerDao().getAllProviders()
 
+    suspend fun syncFromBackend() {
+        runCatching {
+            backendApi.getProveedores().forEach { db.providerDao().insertProvider(it) }
+            backendApi.getProductos().forEach { db.productDao().insertOrUpdateProduct(it) }
+            backendApi.getMovimientos().forEach { db.movementDao().insertMovement(it) }
+        }
+    }
+
     suspend fun saveProduct(product: ProductEntity) {
-        db.productDao().insertOrUpdateProduct(product)
+        val saved = runCatching { backendApi.saveProducto(product) }.getOrDefault(product)
+        db.productDao().insertOrUpdateProduct(saved)
     }
 
     suspend fun deleteProduct(code: String) {
+        runCatching { backendApi.deleteProducto(code) }
         db.productDao().deleteProduct(code)
     }
 
     suspend fun saveProvider(provider: ProviderEntity) {
-        db.providerDao().insertProvider(provider)
+        val saved = runCatching { backendApi.saveProveedor(provider) }.getOrDefault(provider)
+        db.providerDao().insertProvider(saved)
     }
 
     suspend fun deleteProvider(id: String) {
+        runCatching { backendApi.deleteProveedor(id) }
         db.providerDao().deleteProvider(id)
     }
 
@@ -44,11 +60,10 @@ class InventoryRepository(private val db: AppDatabase) {
         return db.providerDao().getProviderById(id)
     }
 
-    // Registro unificado de movimientos con validación antinegativos
     suspend fun registerMovement(
         code: String,
         qty: Int,
-        type: String, // INGRESO, VENTA, CONSUMO, AJUSTE, DEVOLUCION
+        type: String,
         reason: String,
         userId: String
     ): Result<Unit> {
@@ -65,20 +80,26 @@ class InventoryRepository(private val db: AppDatabase) {
 
         val previousStock = product.currentStock
         val resultingStock = if (isOutflow) previousStock - qty else previousStock + qty
-
-        // Actualización de stock e historial dentro del repositorio
-        db.productDao().updateStock(code, resultingStock, System.currentTimeMillis())
+        val now = System.currentTimeMillis()
 
         val movement = MovementEntity(
             productCode = code,
             movementType = type,
             quantity = qty,
+            timestamp = now,
             reason = reason,
             previousStock = previousStock,
             resultingStock = resultingStock,
             registeredByUserId = userId
         )
-        db.movementDao().insertMovement(movement)
+
+        val remoteResult = runCatching { backendApi.createMovimiento(movement) }
+        if (remoteResult.isFailure) {
+            return Result.failure(Exception("Error al registrar en microservicio: ${remoteResult.exceptionOrNull()?.message}"))
+        }
+
+        db.productDao().updateStock(code, resultingStock, now)
+        db.movementDao().insertMovement(remoteResult.getOrDefault(movement))
 
         return Result.success(Unit)
     }

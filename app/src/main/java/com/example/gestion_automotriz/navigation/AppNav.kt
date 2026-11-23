@@ -7,21 +7,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gestion_automotriz.model.ProductEntity
-import com.example.gestion_automotriz.repository.InventoryRepository
 import com.example.gestion_automotriz.ui.theme.home.MuestraDatosScreen
 import com.example.gestion_automotriz.ui.theme.login.LoginViewModel
+import com.example.gestion_automotriz.viewmodel.InventoryViewModel
 import com.example.gestion_automotriz.viewmodel.PostViewModel
 import com.example.gestion_automotriz.view.*
-import kotlinx.coroutines.launch
 
 @Composable
 fun AppNav(
     loginViewModel: LoginViewModel,
-    inventoryRepository: InventoryRepository,
+    inventoryViewModel: InventoryViewModel,
     postViewModel: PostViewModel
 ) {
     val navController = rememberNavController()
-    val scope = rememberCoroutineScope()
     var editingProduct by remember { mutableStateOf<ProductEntity?>(null) }
 
     NavHost(navController = navController, startDestination = "login") {
@@ -35,7 +33,7 @@ fun AppNav(
             arguments = listOf(navArgument("user") { type = NavType.StringType })
         ) { backStackEntry ->
             val user = backStackEntry.arguments?.getString("user") ?: "Propietario"
-            val products by inventoryRepository.getAllProducts().collectAsState(initial = emptyList())
+            val products by inventoryViewModel.products.collectAsState()
 
             DrawerMenu(user = user, navController = navController) { openDrawer ->
                 MuestraDatosScreen(
@@ -47,7 +45,7 @@ fun AppNav(
                         navController.navigate("productoForm/$user")
                     },
                     onDeleteProduct = { product ->
-                        scope.launch { inventoryRepository.deleteProduct(product.code) }
+                        inventoryViewModel.deleteProduct(product.code)
                     }
                 )
             }
@@ -64,7 +62,7 @@ fun AppNav(
                     user = user,
                     initialProduct = editingProduct,
                     onSaveProduct = { product ->
-                        scope.launch { inventoryRepository.saveProduct(product) }
+                        inventoryViewModel.saveProduct(product)
                         editingProduct = null
                     },
                     onBack = {
@@ -84,7 +82,7 @@ fun AppNav(
             DrawerMenu(user = user, navController = navController) {
                 MovimientoFormScreen(
                     onRegisterMovement = { code, qty, type, reason ->
-                        inventoryRepository.registerMovement(code, qty, type, reason, user)
+                        inventoryViewModel.registerMovement(code, qty, type, reason, user)
                     }
                 )
             }
@@ -95,7 +93,7 @@ fun AppNav(
             arguments = listOf(navArgument("user") { type = NavType.StringType })
         ) { backStackEntry ->
             val user = backStackEntry.arguments?.getString("user") ?: "Propietario"
-            val movements by inventoryRepository.getAllMovements().collectAsState(initial = emptyList())
+            val movements by inventoryViewModel.movements.collectAsState()
 
             DrawerMenu(user = user, navController = navController) {
                 HistorialMovimientosScreen(movements = movements)
@@ -107,8 +105,8 @@ fun AppNav(
             arguments = listOf(navArgument("user") { type = NavType.StringType })
         ) { backStackEntry ->
             val user = backStackEntry.arguments?.getString("user") ?: "Propietario"
-            val lowStockProducts by inventoryRepository.getLowStockProducts().collectAsState(initial = emptyList())
-            val providers by inventoryRepository.getAllProviders().collectAsState(initial = emptyList())
+            val lowStockProducts by inventoryViewModel.lowStockProducts.collectAsState()
+            val providers by inventoryViewModel.providers.collectAsState()
 
             DrawerMenu(user = user, navController = navController) {
                 ReposicionScreen(lowStockProducts = lowStockProducts, providers = providers)
@@ -120,14 +118,14 @@ fun AppNav(
             arguments = listOf(navArgument("user") { type = NavType.StringType })
         ) { backStackEntry ->
             val user = backStackEntry.arguments?.getString("user") ?: "Propietario"
-            val providers by inventoryRepository.getAllProviders().collectAsState(initial = emptyList())
+            val providers by inventoryViewModel.providers.collectAsState()
 
             DrawerMenu(user = user, navController = navController) {
                 ProveedorScreen(
                     providers = providers,
-                    onSaveProvider = { prov -> scope.launch { inventoryRepository.saveProvider(prov) } },
+                    onSaveProvider = { prov -> inventoryViewModel.saveProvider(prov) },
                     onDeleteProvider = { provider ->
-                        scope.launch { inventoryRepository.deleteProvider(provider.providerId) }
+                        inventoryViewModel.deleteProvider(provider.providerId)
                     }
                 )
             }
