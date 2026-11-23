@@ -31,4 +31,5 @@
 4. Iniciar sesión con `admin` / PIN `1234` o `operador` / PIN `0000`.
 
 ## 6. Captura del APK Firmado y Llave `.jks`
-![Captura APK Firmado](ruta/captura_apk_firmado.png)
+<img width="364" height="99" alt="imagen" src="https://github.com/user-attachments/assets/2e5b3dfa-3ddb-4aea-a052-d06bed787d11" />
+
