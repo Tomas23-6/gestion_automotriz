@@ -46,6 +46,7 @@ fun DrawerMenu(
                 NavigationDrawerItem(label = { Text("Historial de Movimientos") }, selected = false, onClick = { navigateTo("historial/$user") })
                 NavigationDrawerItem(label = { Text("Módulo de Reposición") }, selected = false, onClick = { navigateTo("reposicion/$user") })
                 NavigationDrawerItem(label = { Text("Gestión de Proveedores") }, selected = false, onClick = { navigateTo("proveedores/$user") })
+                NavigationDrawerItem(label = { Text("Publicaciones API REST") }, selected = false, onClick = { navigateTo("publicaciones/$user") })
 
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
